@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
 # MongoDB Configuration
-MONGO_URI = "mongodb://localhost:27017/"  # Replace with your MongoDB URI if necessary
+MONGO_URI = "mongodb url"  # Replace with your MongoDB URI if necessary
 client = MongoClient(MONGO_URI)
 db = client["attendance_db"]  # Database name (can be changed as needed)
 attendance_collection = db["attendance"]  # Collection name (can be changed)
@@ -75,7 +75,7 @@ def submit_attendance():
 def send_absent_email(email, name, reg_no):
     try:
         # Email configuration
-        sender_email = "email"
+        sender_email = "your mail"
         sender_password = "pass"
         subject = "Attendance Alert: Absent Notification"
 
