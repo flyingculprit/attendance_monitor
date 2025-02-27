@@ -103,9 +103,27 @@
         background-color: white; /* Add a background for contrast */
         padding: 5px;
       }
+      .download-btn {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 15px;
+        font-size: 16px;
+        background-color: #4b6bbd;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .download-btn:hover {
+        background-color: #1d2c5b;
+      }
     </style>
     <!-- Include Chart.js library -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+    <!-- Include Chart.js, jsPDF, and html2canvas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   </head>
   <body>
     <!-- Sidebar -->
@@ -140,6 +158,10 @@
             class="attendance-pie-chart"
           ></canvas>
         </div>
+
+
+        <button class="download-btn" onclick="downloadPDF()">Download as PDF</button>
+
       </div>
     </div>
 
@@ -255,6 +277,57 @@
             });
         }
       });
+      function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Get Student Name
+    const studentName = localStorage.getItem("loggedInUserName") || "Unknown Student";
+
+    // College Logo (Top Left)
+    const logoImg = new Image();
+    logoImg.src = "college_logo.jpg"; // Add your college logo path
+
+    logoImg.onload = function () {
+        // Add Logo at Top Left
+        doc.addImage(logoImg, "JPG", 10, 10, 50, 20); // Adjust width & height as needed
+
+        // Title: Attendance Report (Centered Below Logo)
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Attendance Report", 105, 40, null, null, "center");
+
+        // Student Name (Below Title, Centered)
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.text(`Register Number: ${studentName}`, 105, 50, null, null, "center");
+
+        // Capture the Chart
+        html2canvas(document.getElementById("attendance-pie-chart")).then((canvas) => {
+            const imgData = canvas.toDataURL("image/png");
+            doc.addImage(imgData, "PNG", 60, 60, 100, 80); // Chart Position
+
+            // Fetch attendance information
+            const info = document.getElementById("attendance-info").innerText.split("\n");
+            doc.setFontSize(12);
+
+            let yPosition = 150; // Position below the chart
+            doc.text("Attendance Details:", 86, yPosition);
+            doc.setFontSize(10);
+            yPosition += 8;
+
+            info.forEach((line) => {
+                doc.text(line, 88, yPosition);
+                yPosition += 4; // Spacing
+            });
+
+            // Save the PDF
+            doc.save(`${studentName}_attendance_report.pdf`);
+        });
+    };
+}
+
+
     </script>
   </body>
 </html>

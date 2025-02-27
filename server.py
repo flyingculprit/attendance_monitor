@@ -8,8 +8,12 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
+ # Email Configuration
+sender_email = ""
+sender_password = ""
+
 # MongoDB Configuration
-MONGO_URI = "mongodb url"  # Replace with your MongoDB URI if necessary
+MONGO_URI = ""  # Replace with your MongoDB URI if necessary
 client = MongoClient(MONGO_URI)
 db = client["attendance_db"]  # Database name (can be changed as needed)
 attendance_collection = db["attendance"]  # Collection name (can be changed)
@@ -56,6 +60,13 @@ def submit_attendance():
                         {"regNo": reg_no},
                         {"$inc": {"absent": 1}}  # Increment absent count by 1
                     )
+                    user = attendance_collection.find_one({"regNo": reg_no})
+                    percentage = (user.get("present")/(user.get("present")+user.get("absent")))*100
+                    if percentage < 60:
+                        send_percentage_email_to_student(email, record.get('name')  ,  reg_no,  percentage)
+                        send_percentage_email_to_mentor(user.get('mentor_email'), record.get('name'),  percentage,reg_no)
+
+
                     if email:
                         send_absent_email(email, record.get('name'), reg_no)
             else:
@@ -74,9 +85,7 @@ def submit_attendance():
     
 def send_absent_email(email, name, reg_no):
     try:
-        # Email configuration
-        sender_email = "your mail"
-        sender_password = "pass"
+       
         subject = "Attendance Alert: Absent Notification"
 
         # Create the email content
@@ -105,6 +114,86 @@ def send_absent_email(email, name, reg_no):
             print(f"Absent email sent to {email}")
     except Exception as e:
         print(f"Failed to send email to {email}. Error: {e}")
+
+
+def send_percentage_email_to_student(email, name, reg_no, attendance_percentage):
+    try:
+       
+        subject = "Attendance Warning: Low Attendance Percentage"
+
+        # Create the email content
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = email
+        message['Subject'] = subject
+
+        body = f"""
+        Dear {name} with Reg No: {reg_no},
+
+        We noticed that your attendance percentage has dropped below 60% (Current: {attendance_percentage:.2f}%).
+
+        Kindly ensure to attend upcoming classes regularly to avoid any academic issues. If you have taken any medical leave, please provide the necessary documents to your class advisors.
+
+        It is important to maintain a good attendance record to avoid any disciplinary actions.
+
+        Thank you for your cooperation.
+
+        Regards,  
+        Attendance Management System
+        """
+        message.attach(MIMEText(body, 'plain'))
+
+        # Connect to the email server and send the email
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, message.as_string())
+            print(f"Low attendance email sent to {email}")
+    except Exception as e:
+        print(f"Failed to send email to {email}. Error: {e}")
+
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def send_percentage_email_to_mentor(mentor_email, student_name, attendance_percentage, reg_no):
+    try:
+        
+        subject = f"Alert: {student_name}'s Low Attendance"
+
+        # Create the email content
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = mentor_email
+        message['Subject'] = subject
+
+        body = f"""
+        Dear Mentor,
+
+        This is to inform you that your student **{student_name} (Reg No: {reg_no})** has an attendance percentage below 60%.  
+        **Current Attendance: {attendance_percentage:.2f}%**
+
+        Kindly ensure that the student is aware of this situation.  
+        Please advise them to attend classes regularly to avoid academic issues. If they have taken any medical leave, they should provide the necessary documents to the class advisor.
+
+        Your guidance in this matter will be highly appreciated.
+
+        Regards,  
+        Attendance Management System
+        """
+        message.attach(MIMEText(body, 'plain'))
+
+        # Connect to the email server and send the email
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, mentor_email, message.as_string())
+            print(f"Low attendance alert sent to mentor: {mentor_email}")
+    except Exception as e:
+        print(f"Failed to send email to {mentor_email}. Error: {e}")
+
+
 # Endpoint to fetch all attendance records (GET request)
 @app.route('/api/attendance', methods=['GET'])
 def get_attendance():
