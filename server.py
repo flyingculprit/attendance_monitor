@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
 # MongoDB Configuration
-MONGO_URI = "mongodb url"  # Replace with your MongoDB URI if necessary
+MONGO_URI = "mongodb+srv://dhurgatharan16:CYRUSBYTE@cyrusbyte.xidyw.mongodb.net/"  # Replace with your MongoDB URI if necessary
 client = MongoClient(MONGO_URI)
 db = client["attendance_db"]  # Database name (can be changed as needed)
 attendance_collection = db["attendance"]  # Collection name (can be changed)
@@ -75,9 +75,23 @@ def submit_attendance():
 def send_absent_email(email, name, reg_no):
     try:
         # Email configuration
-        sender_email = "your mail"
-        sender_password = "pass"
+        sender_email = "dhurgatharan16@gmail.com"
+        sender_password = "odvh ynuv hycr mpba"
         subject = "Attendance Alert: Absent Notification"
+
+        # Fetch the student attendance data from MongoDB
+        student = attendance_collection.find_one({"regNo": reg_no})
+        
+        if not student:
+            print(f"Student with Reg No: {reg_no} not found!")
+            return
+
+        # Calculate the attendance percentage
+        total_classes = student.get("present", 0) + student.get("absent", 0)
+        if total_classes > 0:
+            attendance_percentage = (student.get("present", 0) / total_classes) * 100
+        else:
+            attendance_percentage = 0
 
         # Create the email content
         message = MIMEMultipart()
@@ -89,6 +103,12 @@ def send_absent_email(email, name, reg_no):
         Dear {name},
 
         This is to inform you that you have been marked absent today (Reg No: {reg_no}).
+
+        Your current attendance status is as follows:
+        Total Classes: {total_classes}
+        Present: {student.get("present", 0)}
+        Absent: {student.get("absent", 0)}
+        Attendance Percentage: {attendance_percentage:.2f}%
 
         Please ensure to attend the next session or provide a valid reason for your absence.
 
@@ -105,6 +125,7 @@ def send_absent_email(email, name, reg_no):
             print(f"Absent email sent to {email}")
     except Exception as e:
         print(f"Failed to send email to {email}. Error: {e}")
+
 # Endpoint to fetch all attendance records (GET request)
 @app.route('/api/attendance', methods=['GET'])
 def get_attendance():
