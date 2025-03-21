@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
 # MongoDB Configuration
-MONGO_URI = "mongodb+srv://dhurgatharan16:CYRUSBYTE@cyrusbyte.xidyw.mongodb.net/"  # Replace with your MongoDB URI if necessary
+MONGO_URI = ""  # Replace with your MongoDB URI if necessary
 client = MongoClient(MONGO_URI)
 db = client["attendance_db"]  # Database name (can be changed as needed)
 attendance_collection = db["attendance"]  # Collection name (can be changed)
