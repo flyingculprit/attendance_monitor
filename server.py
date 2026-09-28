@@ -75,8 +75,8 @@ def submit_attendance():
 def send_absent_email(email, name, reg_no):
     try:
         # Email configuration
-        sender_email = "dhurgatharan16@gmail.com"
-        sender_password = "odvh ynuv hycr mpba"
+        sender_email = ""
+        sender_password = ""
         subject = "Attendance Alert: Absent Notification"
 
         # Fetch the student attendance data from MongoDB
